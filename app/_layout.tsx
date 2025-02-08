@@ -22,7 +22,13 @@ import { AlertProvider } from "../context/AlertProvider";
 import { ThemeProvider } from "../context/ThemeProvider";
 import Colors from "../constants/Colors";
 import React from "react";
-export default function Root() {
+import * as Sentry from "@sentry/react-native";
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY,
+  debug: true, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
+});
+function Root() {
   const [isReady, setReady] = useState(false);
   const [auth, setAuth] = useState<string | null>(null);
   useEffect(() => {
@@ -108,3 +114,4 @@ export default function Root() {
     </ThemeProvider>
   );
 }
+export default Sentry.wrap(Root);

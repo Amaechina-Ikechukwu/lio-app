@@ -108,7 +108,7 @@ const GoogleSignIn = () => {
         padding: 20,
         margin: 5,
         borderRadius: 15,
-        height: 200,
+        height: 400,
         justifyContent: "flex-end",
         width: width * 0.85,
       }}
