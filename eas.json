@@ -12,6 +12,9 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        " EXPO_PUBLIC_LIOSERVER": "https://lio-backend-72975761200.us-east1.run.app"
       }
     },
     "production": {

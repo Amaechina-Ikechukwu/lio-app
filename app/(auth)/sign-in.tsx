@@ -91,8 +91,8 @@ const GoogleSignIn = () => {
       // router.push("/(home)/");
 
       return;
-    } catch (error) {
-      throw new Error("Error");
+    } catch (error:any) {
+      throw new Error(error);
     }
   };
   const theme = useTheme();
