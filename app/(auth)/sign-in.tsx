@@ -34,67 +34,70 @@ const GoogleSignIn = () => {
   const authProvider = useAuth();
   const router = useRouter();
   const { showAlert } = useAlert();
-  useEffect(() => {
-    Linking.addEventListener("url", handleDeepLink);
-    return () => {};
-    // Cleanup function to remove the event listener when the component unmounts
-  }, []); // Empty dependency array ensures the effect only runs once during mount
-
-  // ... Your imports and component definition ...
-  const handleDeepLink = async (event: any) => {
-    const accessParam = "access_token=";
-    const idParam = "id_token=";
-    const code = "code=";
-    if (event.url.includes(accessParam) && event.url.includes(idParam)) {
-      const access_token = event.url.split(accessParam)[1].split("&")[0];
-      const id_token = event.url.split(idParam)[1].split("&")[0];
-      const codeId = event.url.split(code)[1];
-      // Now 'access_token', 'id_token', and 'codeId' contain the extracted values
-      showAlert("Logging in,please wait");
-      await connectToFirebase(id_token);
-      return;
-      // Close the in-app browser
-      // Note: WebBrowser.dismissBrowser(); may not work in some cases
-    }
+useEffect(() => {
+  const subscription = Linking.addEventListener("url", handleDeepLink);
+  return () => {
+    subscription.remove();
   };
-  const connectToFirebase = async (id_token: string) => {
-    const credential = GoogleAuthProvider.credential(id_token);
-    const result = await signInWithCredential(auth, credential);
-    const user = { uid: result.user.uid };
+}, []);
 
-    await loginToLioServer(user);
+// ... Your imports and component definition ...
+const handleDeepLink = async (event: any) => {
+  const accessParam = "access_token=";
+  const idParam = "id_token=";
+  const code = "code=";
+  if (event.url.includes(accessParam) && event.url.includes(idParam)) {
+    const access_token = event.url.split(accessParam)[1].split("&")[0];
+    const id_token = event.url.split(idParam)[1].split("&")[0];
+    const codeId = event.url.split(code)[1];
+    // Now 'access_token', 'id_token', and 'codeId' contain the extracted values
+    showAlert("Logging in,please wait");
+    await connectToFirebase(id_token);
     return;
-  };
-  const appurl = Linking.createURL("");
-  const handleLogin = async () => {
-    const authEndpoint =
-      process.env.EXPO_PUBLIC_LIOSERVER + "/auth/google?redirectUri=" + appurl;
-    WebBrowser.openAuthSessionAsync(authEndpoint);
-  };
-  const loginToLioServer = async (userInfo: any) => {
-    try {
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_LIOSERVER}/registeruser` || "",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(userInfo),
-        }
-      );
+    // Close the in-app browser
+    // Note: WebBrowser.dismissBrowser(); may not work in some cases
+  }
+};
+const connectToFirebase = async (id_token: string) => {
+  const credential = GoogleAuthProvider.credential(id_token);
+  const result = await signInWithCredential(auth, credential);
+  const user = { uid: result.user.uid };
 
-      // Log the response text
-      const responseData = await response.json(); // Parse JSON
-
-      await authProvider.signIn(responseData?.token);
-      // router.push("/(home)/");
-
+  await loginToLioServer(user);
+  return;
+};
+const appurl = Linking.createURL("");
+const handleLogin = async () => {
+  const authEndpoint =
+    process.env.EXPO_PUBLIC_LIOSERVER + "/auth/google?redirectUri=" + appurl;
+  WebBrowser.openAuthSessionAsync(authEndpoint);
+};
+const loginToLioServer = async (userInfo: any) => {
+  try {
+    const serverUrl = process.env.EXPO_PUBLIC_LIOSERVER;
+    if (!serverUrl) {
+      console.error("EXPO_PUBLIC_LIOSERVER is not defined");
       return;
-    } catch (error:any) {
-      throw new Error(error);
     }
-  };
+    const response = await fetch(`${serverUrl}/registeruser`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userInfo),
+    });
+
+    // Log the response text
+    const responseData = await response.json(); // Parse JSON
+
+    await authProvider.signIn(responseData?.token);
+    // router.push("/(home)/");
+
+    return;
+  } catch (error: any) {
+    throw new Error(error);
+  }
+};
   const theme = useTheme();
   const { width } = Dimensions.get("window");
   const colorSchemeAsKey = theme.colorScheme as keyof typeof Colors;
